@@ -4,6 +4,7 @@ const generateSymmetricKey = require('./scripts/generateKey');
 const {testConnection} = require('./config/db.cofig');
 const authController = require('./controller/authentication/signin.controller');
 const uploadController = require('./controller/upload/upload.controller');
+const fetchImageController = require('./controller/fetch/fetchImages.controller');
 
 
 const app = express();
@@ -14,10 +15,9 @@ generateSymmetricKey();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-app.use('/upload', uploadController);
-
 app.use('/auth', authController);
+app.use('/upload', uploadController);
+app.use('/fetch', fetchImageController)
 
 app.listen(3000, '0.0.0.0', ()=>{
 
@@ -26,7 +26,7 @@ app.listen(3000, '0.0.0.0', ()=>{
         console.error(`stderr: ${data}`);
     });
     output.stdout.on('data',(data)=>{
-        console.log(`http://${data.toString().trim()}:3000`);
+        console.log(`http://${data.toString().trim()}.local:3000`);
     });
 });
 
