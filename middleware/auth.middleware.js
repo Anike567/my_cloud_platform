@@ -13,9 +13,8 @@ const SECRET = process.env.SECRET;
 
 function authenticate(req, res, next) {
     try {
-        const authHeader = req.headers['authorization'];
+        const authHeader = req.headers['Authorization'] || req.headers['authorization'];
         const encryptedToken = authHeader && authHeader.split(' ')[1];
-        
         if (!encryptedToken) {
             return res.status(401).json({ error: "Unauthorized" });
         }
@@ -43,14 +42,13 @@ function authenticate(req, res, next) {
             decrypted = decipher.update(encryptedData, 'hex', 'utf8');
             decrypted += decipher.final('utf8');
         } catch (error) {
-            // This catches if the data was tampered with (GCM auth failure)
+            console.log(error);
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        // Verify the JWT using the secret
-        // Using synchronous version so it works correctly with the outer try/catch
+        console.log(decrypted) ;
         const decoded = jwt.verify(decrypted, SECRET);
-        
+        console.log(decoded);
         req.user = decoded;
         next();
 
