@@ -8,15 +8,18 @@ const fetchImages = new fetchImagesService();
 const fetchImageController = Router();
 
 /**
- * 1. GET LIST OF IMAGES (Protected)
- * Returns: ["img1.jpg", "img2.png"]
+ * fetch the fcm token from fcm id with respectice devideId
+ * generate a uuid request to uniquely identify this rquest
+ * send notification to the specifice id  with image location which is required
+ * 
  */
 fetchImageController.get("/images", (req, res)=>{
     fetchImages.getImages(req, res);
 });
-
+/**
+ * call back function for checking for saving image into redis as a buffer with the respective requestid
+ */
 fetchImageController.post("/callback", (req, res)=>{
-    console.log("request get hit");
     fetchImages.callback(req, res);
 })
 
