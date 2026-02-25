@@ -13,14 +13,13 @@ const fetchImageController = Router();
  */
 fetchImageController.get("/images", (req, res)=>{
     fetchImages.getImages(req, res);
-});;
+});
 
-/**
- * 2. GET SINGLE IMAGE (Protected)
- * Usage: /images/my-secret-photo.jpg
- */
-// fetchImageController.get("/images/:filename", authenticate, (req, res)=>{
-//     fetchImages.getImage(req, res);
-// });
+fetchImageController.post("/callback", (req, res)=>{
+    console.log("request get hit");
+    fetchImages.callback(req, res);
+})
+
+
     
 module.exports = fetchImageController;
