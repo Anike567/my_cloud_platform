@@ -56,8 +56,6 @@ class authenticationService {
     
     async signup(req, res) {
         const { name, username, email, password } = req.body;
-
-        // Validation check
         const newUser = {
             _id: uuidv7(),
             name,

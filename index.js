@@ -5,11 +5,14 @@ const { testConnection } = require('./config/db.cofig');
 const authController = require('./controller/authentication/signin.controller');
 const fetchImageController = require('./controller/fetch/fetchImages.controller');
 const uploadController = require('./controller/upload/upload.controller');
+const connectFirebase = require('./config/firebase.config');
+require('dotenv').config();
 
 
 
 const app = express();
 testConnection();
+connectFirebase();
 const router = express.Router();
 generateSymmetricKey();
 
@@ -28,7 +31,6 @@ app.use('/upload', uploadController);
 app.use('/fetch', fetchImageController)
 
 app.listen(3000, '0.0.0.0', () => {
-
     const output = spawn('hostname', []);
     output.stderr.on('data', (data) => {
         console.error(`stderr: ${data}`);
