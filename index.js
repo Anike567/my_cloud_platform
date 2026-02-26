@@ -6,6 +6,7 @@ const authController = require('./controller/authentication/signin.controller');
 const fetchImageController = require('./controller/fetch/fetchImages.controller');
 const uploadController = require('./controller/upload/upload.controller');
 const connectFirebase = require('./config/firebase.config');
+const deviceSyncRouter = require('./controller/sync/deviceSync.controller');
 require('dotenv').config();
 
 
@@ -29,6 +30,7 @@ app.get('/sync/hello', (req, res) => {
 app.use('/auth', authController);
 app.use('/upload', uploadController);
 app.use('/fetch', fetchImageController)
+app.use('/sync', deviceSyncRouter);
 
 app.listen(3000, '0.0.0.0', () => {
     const output = spawn('hostname', []);

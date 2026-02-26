@@ -54,6 +54,7 @@ function authenticate(req, res, next) {
 
     } catch (error) {
         // Catches expired tokens or invalid JWT signatures
+        console.log(error);
         return res.status(401).json({ error: "Unauthorized" });
     }
 }
