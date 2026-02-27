@@ -13,13 +13,13 @@ const fetchImageController = Router();
  * send notification to the specifice id  with image location which is required
  * 
  */
-fetchImageController.get("/images", (req, res)=>{
+fetchImageController.get("/images", authenticate, (req, res)=>{
     fetchImages.getImages(req, res);
 });
 /**
  * call back function for checking for saving image into redis as a buffer with the respective requestid
  */
-fetchImageController.post("/callback", (req, res)=>{
+fetchImageController.post("/callback", authenticate,(req, res)=>{
     fetchImages.callback(req, res);
 })
 

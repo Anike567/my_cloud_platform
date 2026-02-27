@@ -2,25 +2,75 @@ const path = require('path');
 const { v7: uuidv7 } = require('uuid');
 const fs = require('fs');
 const IMAGE_DIR = path.join(__dirname, '../../uploads/images');
-const EventEmitter = require('events');
 const sendNotification = require('./../../scripts/sendNotification');
+const RedisConfiguration = require('./../../config/redis.config');
+const validateKey = require('./../../scripts/validateKeys');
+const { pool } = require('./../../config/db.cofig');
 module.exports = class fetchImagesService {
-    
+
 
     async getImages(req, res) {
-        const reqId = uuidv7();
-        const {success, messageId} = await sendNotification(reqId);
-        if(success){
-            return res.status(200).json({message : "Notification sent successfully"});
+
+        const requiredKeys = ["deviceId", "fileLocation"];
+        if (!validateKey(requiredKeys, req.body)) {
+            return res.status(400).json({ error: true, message: "Some required fields are missing" })
         }
-        
-        res.status(500).json({message : "Internal server error occures"});
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({ error: true, message: "Unauthorized" });
+        }
+        const { deviceId, fileLocation } = req.body;
+        const reqId = uuidv7();
+        try {
+            const getFcmTokenQuery = `SELECT devices.fcm_token 
+FROM users 
+INNER JOIN devices ON users._id = devices.user_id 
+WHERE users._id = ? AND devices.android_id = ?;`;
+
+            const [rows] = await pool.execute(getFcmTokenQuery, [user.id, deviceId]);
+            console.log(rows);
+            if (rows.length === 0 || !rows[0].fcm_token) {
+                return res.status(404).json({ error: true, message: "Device not found or FCM token missing" });
+            }
+
+            const targetFcmToken = rows[0].fcm_token;
+            console.log("🚀 Sending notification to token:", targetFcmToken);
+
+
+            const { success, messageId } = await sendNotification(reqId, fileLocation, targetFcmToken);
+
+            if (success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Sync request sent to device",
+                    requestId: reqId
+                });
+            } else {
+                return res.status(500).json({ error: true, message: "Failed to send notification" });
+            }
+        }
+        catch (err) {
+            console.log(err);
+            res.status(500).json({ message: "Internal server error occures" });
+        }
+
     }
 
-    // This route is called by the Mobile Phone (The "Answer")
     async callback(req, res) {
-       
-        console.log(req.body);
-        res.status(200).json({message : "done"});
+        const { reqId } = req.body;
+        const client = RedisConfiguration.getClient();
+
+        try {
+            const imageStream = await client.get(reqId);
+
+            if(imageStream){
+                return res.status(200).json({error : false, data : imageStream});
+            }
+            return res.status(404).json({error : false, message : "Not found"});
+        }
+        catch(err){
+            console.log(err);
+            return res.status(500).json({error : true, message : "internal server error"});
+        }
     }
 };

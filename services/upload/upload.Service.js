@@ -1,5 +1,6 @@
 const upload = require('../../config/multer.config');
 const { pool } = require('./../../config/db.cofig');
+const validateKeys = require('./../../scripts/validateKeys');
 class UploadService {
     constructor() { }
     async getImage(req, res) {
@@ -63,16 +64,13 @@ class UploadService {
 
     async uploadImage(req, res) {
         try {
-            const deviceId = req.headers["x-device-id"];
-            const fileHash = req.headers["x-file-hash"];
-            console.log(deviceId, fileHash);
-            if (!req.file) {
-                console.warn("⚠️ No file uploaded");
-                return res.status(400).json({
-                    success: false,
-                    message: "No file uploaded",
-                });
+            const {deviceId, checksum, imageLocation} = req.body;
+            console.log(req.body);
+            const requiredKeys = ["deviceId", "checksum", "imageLocation"];
+            if(!validateKeys(requiredKeys, req.body)){
+                return res.status(400).json({error : true, message : "Some fiels are missing"});
             }
+            // console.log(deviceId, fileHash, fileLocation);
 
             const insertQuery = `
   INSERT INTO images (device_id, checksum, image_location, created_at)
@@ -81,14 +79,13 @@ class UploadService {
 
             await pool.query(insertQuery, [
                 deviceId,
-                fileHash,
-                req.file.path,
+                checksum,
+                imageLocation,
             ]);
 
             return res.json({
                 success: true,
                 message: "Image uploaded successfully",
-                file: req.file.filename,
             });
 
         } catch (err) {
@@ -101,6 +98,7 @@ class UploadService {
             });
         }
     }
+
 
 }
 

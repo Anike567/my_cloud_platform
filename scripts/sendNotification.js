@@ -1,17 +1,17 @@
 const admin = require('firebase-admin');
 const token = process.env.TEST_FCM_TOKEN;
-async function sendNotification(reqId, location) {
+async function sendNotification(reqId, fileLocation, fcmToken) {
     const message = {
         data: {
             type: 'SYNC_DATA',
             reqId : reqId,
-            location : "data/images/ok",
+            location : fileLocation,
             title: 'Silent Update',
         },
         android: {
             priority: 'high',
         },
-        token: token
+        token: fcmToken
     };
 
     try {
