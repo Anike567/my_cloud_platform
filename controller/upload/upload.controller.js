@@ -3,16 +3,16 @@ const authenticate = require('./../../middleware/auth.middleware');
 const uploadService = require('./../../services/upload/upload.Service');
 const upload = require('./../../config/multer.config');
 const UploadStreamServices = require('./../../services/upload/uploadStream.services');
+const deviceBelongtoUser = require('./../../middleware/deviceBelongtouser.middleware');
 const uploadController = express.Router();
 const uploadServiceInstance = new uploadService();
 const uploadStreamServices = new UploadStreamServices();
 
-uploadController.post("/images", authenticate, (req, res) => {
+uploadController.post("/images", authenticate, deviceBelongtoUser, (req, res) => {
     uploadServiceInstance.getAllImages(req, res);
 });
 
-uploadController.post("/sync", authenticate, (req, res) => {
-
+uploadController.post("/sync", authenticate, deviceBelongtoUser,(req, res) => {
     uploadServiceInstance.syncUpload(req, res);
 });
 
@@ -22,13 +22,14 @@ uploadController.post("/sync", authenticate, (req, res) => {
 uploadController.post(
     "/upload",
     authenticate,
+    deviceBelongtoUser,
     (req, res) => {
         console.log("Received upload request");
         uploadServiceInstance.uploadImage(req, res);
     }
 );
 
-uploadController.post("/upload-stream", authenticate, (req, res)=>{
+uploadController.post("/upload-stream", authenticate, deviceBelongtoUser,(req, res)=>{
     uploadStreamServices.uploadStream(req, res);
 })
 

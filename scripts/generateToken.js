@@ -25,7 +25,7 @@ const generateToken = (payload) => {
 
     // 5. Return the "Double-Locked" token
     // Format: iv.authTag.encryptedData
-    return `${iv.toString('hex')}.${authTag}.${encrypted}`;
+    return `${iv.toString('hex')}:${authTag}:${encrypted}`;
 };
 
 module.exports = generateToken;

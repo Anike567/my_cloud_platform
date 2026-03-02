@@ -7,6 +7,7 @@ const fetchImageController = require('./controller/fetch/fetchImages.controller'
 const uploadController = require('./controller/upload/upload.controller');
 const connectFirebase = require('./config/firebase.config');
 const deviceSyncRouter = require('./controller/sync/deviceSync.controller');
+const os = require('os');
 require('dotenv').config();
 
 
@@ -33,7 +34,8 @@ app.use('/fetch', fetchImageController)
 app.use('/sync', deviceSyncRouter);
 
 app.listen(3000, '0.0.0.0', () => {
-    const output = spawn('hostname', []);
+    const command = os.platform() === 'darwin' ? 'ipconfig' : 'hostname'
+    const output = spawn(command, ['getifaddr' ,'en0']);
     output.stderr.on('data', (data) => {
         console.error(`stderr: ${data}`);
     });
