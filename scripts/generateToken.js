@@ -7,7 +7,7 @@ const EXPIRES_IN = process.env.TOKEN_EXPIRES_IN || '1h';
 
 const generateToken = (payload) => {
     // 1. Create the standard JWT
-    const jwtToken = jwt.sign(payload, SECRET, { expiresIn: EXPIRES_IN });
+    const jwtToken = jwt.sign(payload, SECRET);
 
     // 2. Setup Encryption
     const algorithm = 'aes-256-gcm';
