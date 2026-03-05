@@ -65,7 +65,6 @@ class UploadService {
     async uploadImage(req, res) {
         try {
             const {deviceId, checksum, imageLocation} = req.body;
-            console.log(req.body);
             const requiredKeys = ["deviceId", "checksum", "imageLocation"];
             if(!validateKeys(requiredKeys, req.body)){
                 return res.status(400).json({error : true, message : "Some fiels are missing"});
