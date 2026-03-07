@@ -10,4 +10,5 @@
 *.iml
 /build
 /tmp    
+/uploadsnotificationService.json
 /uploads
