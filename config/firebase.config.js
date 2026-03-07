@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./../../notificatinService.json');
+const serviceAccount = require('./../notificationService.json');
 
 let isInitialized = false;
 
