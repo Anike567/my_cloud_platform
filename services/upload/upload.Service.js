@@ -4,26 +4,62 @@ const validateKeys = require('./../../scripts/validateKeys');
 class UploadService {
     constructor() { }
     async getImage(req, res) {
-       
-    }      
-    async getAllImages(req, res){
-        const {deviceId} = req.body;
+
+    }
+    async getAllImages(req, res) {
+        const { lastId = 0 } = req.body;
+        const limit = 50;
+        const user = req.user;
+
         try {
-            const [rows] = await pool.query(
-                "SELECT image_location FROM images WHERE device_id = ?",
-                [deviceId]
+            // 1. Get all device IDs associated with this user
+            const [deviceRows] = await pool.query(
+                "SELECT android_id FROM devices WHERE user_id = ?",
+                [user.id]
             );
-            const imageLocations = rows.map(row => row.image_location);
-            res.json({ images: imageLocations });
+
+            // 2. Safety check: If user has no devices, return empty images immediately
+            if (deviceRows.length === 0) {
+                return res.status(200).json({
+                    error: false,
+                    images: [],
+                    nextId: lastId,
+                    hasMore: false
+                });
+            }
+
+            // 3. Extract IDs into a simple array: ["id1", "id2"]
+            const androidIds = deviceRows.map(device => device.android_id);
+            console.log(androidIds);
+            /**
+             * 4. ✅ SQL FIX: 
+             * In mysql2, for the 'IN' operator to work with an array, 
+             * you must wrap the array in another array: [[ids]]
+             */
+            const [rows] = await pool.query(
+                "SELECT id, image_location, preview, device_id FROM images  WHERE device_id IN (?) AND id > ? ORDER BY id ASC LIMIT ?",
+                [androidIds, lastId, limit]
+            );
+
+            const nextId = rows.length > 0 ? rows[rows.length - 1].id : lastId;
+            const hasMore = rows.length === limit;
+            console.log(rows.length);
+            return res.status(200).json({
+                error: false,
+                images: rows,
+                nextId: nextId,
+                hasMore: hasMore
+            });
+
         } catch (err) {
-            console.error("❌ Fetch Error:", err);
-            res.status(500).json({
-                error: "Failed to fetch images",
+            console.error("❌ SQL Fetch Error:", err);
+            return res.status(500).json({
+                error: true,
+                message: "Failed to fetch images",
                 detail: err.message
             });
-        }   
+        }
     }
-
 
     async syncUpload(req, res) {
         try {
@@ -64,22 +100,23 @@ class UploadService {
 
     async uploadImage(req, res) {
         try {
-            const {deviceId, checksum, imageLocation} = req.body;
+            const { deviceId, checksum, imageLocation, preview } = req.body;
             const requiredKeys = ["deviceId", "checksum", "imageLocation"];
-            if(!validateKeys(requiredKeys, req.body)){
-                return res.status(400).json({error : true, message : "Some fiels are missing"});
+            if (!validateKeys(requiredKeys, req.body)) {
+                return res.status(400).json({ error: true, message: "Some fiels are missing" });
             }
             // console.log(deviceId, fileHash, fileLocation);
 
             const insertQuery = `
-  INSERT INTO images (device_id, checksum, image_location, created_at)
-  VALUES (?, ?, ?, NOW())
+  INSERT INTO images (device_id, checksum, image_location, preview, created_at)
+  VALUES (?, ?, ?, ?, NOW())
 `;
 
             await pool.query(insertQuery, [
                 deviceId,
                 checksum,
                 imageLocation,
+                preview
             ]);
 
             return res.json({

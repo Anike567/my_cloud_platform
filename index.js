@@ -34,13 +34,28 @@ app.use('/fetch', fetchImageController)
 app.use('/sync', deviceSyncRouter);
 
 app.listen(3000, '0.0.0.0', () => {
-    const command = os.platform() === 'darwin' ? 'ipconfig' : 'hostname'
-    const output = spawn(command, ['getifaddr' ,'en0']);
-    output.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
-    });
+    let command;
+    let args;
+
+    if (os.platform() === 'darwin') {
+        command = 'ipconfig';
+        args = ['getifaddr', 'en0'];
+    } else {
+        // Linux/Ubuntu (common for development)
+        command = 'hostname';
+        // args = ['-I']; 
+    }
+
+    const output = spawn(command, args);
+
     output.stdout.on('data', (data) => {
-        console.log(`http://${data.toString().trim()}.local:3000`);
+        // .split(' ')[0] handles cases where hostname -I returns multiple IPs
+        const ip = data.toString().trim().split(' ')[1] || data.toString().trim().split(' ')[0];
+        console.log(`🚀 Server running at: http://${ip}:3000`);
+    });
+
+    output.stderr.on('data', (data) => {
+        console.error(`Error fetching IP: ${data}`);
     });
 });
 

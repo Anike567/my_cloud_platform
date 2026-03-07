@@ -14,7 +14,7 @@ const fetchImageController = Router();
  * send notification to the specifice id  with image location which is required
  * 
  */
-fetchImageController.get("/images", authenticate, deviceBelongtoUser,(req, res)=>{
+fetchImageController.post("/images", authenticate, deviceBelongtoUser,(req, res)=>{
     fetchImages.getImages(req, res);
 });
 /**

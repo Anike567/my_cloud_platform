@@ -3,11 +3,11 @@ const RedisConfiguration = require('./../../config/redis.config');
 
 class UploadStreamServices {
     async uploadStream(req, res) {
+        // We still expect these fields from your updated frontend
         const required = ["reqId", "chunk", "isFinal"];
 
-        // 1. Fixed the validation logic syntax
         if (!validateKey(required, req.body)) {
-            return res.status(400).json({ error: true, message: "Some fields are missing" });
+            return res.status(400).json({ error: true, message: "Required fields (reqId, chunk, isFinal) are missing" });
         }
 
         const { reqId, chunk, isFinal } = req.body;
@@ -16,26 +16,29 @@ class UploadStreamServices {
             const client = RedisConfiguration.getClient();
 
             /**
-             * 2. ✅ Performance Fix: Use APPEND instead of GET + SET
-             * This happens inside Redis (C++ level), so Node.js doesn't have to 
-             * hold the entire growing file in its memory.
+             * 1. ✅ Use SET instead of APPEND for single-payload uploads.
+             * Since the frontend now sends the full image in one 'chunk', 
+             * SET ensures we don't duplicate data if the background task retries.
              */
-            await client.append(reqId, chunk);
+            await client.set(reqId, chunk);
 
             if (isFinal) {
-                // 3. Set an expiry (e.g., 1 hour) so Redis doesn't fill up forever
-                await client.expire(reqId, 3600);
+                /**
+                 * 2. ✅ Expiry Management
+                 * Set expiry to 10 minutes (600 seconds). 
+                 * This gives the user enough time to view the modal before Redis clears it.
+                 */
+                await client.expire(reqId, 600);
                 
-                // Here you would typically trigger a "Save to Disk/DB" job
-                console.log(`File ${reqId} is complete in Redis.`);
+                console.log(`✅ Image ${reqId} is now ready for retrieval in Redis.`);
             }
 
             return res.status(200).json({
                 error: false,
-                message: isFinal ? "Image received completely" : "Chunk processed"
+                message: "Image stored successfully in cache"
             });
         } catch (err) {
-            console.error("Redis Error:", err);
+            console.error("❌ Redis Error:", err);
             return res.status(500).json({ error: true, message: "Internal server error" });
         }
     }

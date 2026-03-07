@@ -12,6 +12,7 @@ module.exports = class fetchImagesService {
     async getImages(req, res) {
 
         const requiredKeys = ["deviceId", "fileLocation"];
+        console.log(req.body);
         if (!validateKey(requiredKeys, req.body)) {
             return res.status(400).json({ error: true, message: "Some required fields are missing" })
         }
@@ -28,7 +29,7 @@ INNER JOIN devices ON users._id = devices.user_id
 WHERE users._id = ? AND devices.android_id = ?;`;
 
             const [rows] = await pool.execute(getFcmTokenQuery, [user.id, deviceId]);
-            console.log(rows);
+          
             if (rows.length === 0 || !rows[0].fcm_token) {
                 return res.status(404).json({ error: true, message: "Device not found or FCM token missing" });
             }
@@ -59,14 +60,14 @@ WHERE users._id = ? AND devices.android_id = ?;`;
     async callback(req, res) {
         const { reqId } = req.body;
         const client = RedisConfiguration.getClient();
-
+        console.log("from callback", reqId);
         try {
             const imageStream = await client.get(reqId);
 
             if(imageStream){
-                return res.status(200).json({error : false, data : imageStream});
+                return res.status(200).json({error : false,status : "completed", data : imageStream});
             }
-            return res.status(404).json({error : false, message : "Not found"});
+            return res.status(200).json({error : false, status : "pending", message : "Image not found"});
         }
         catch(err){
             console.log(err);
