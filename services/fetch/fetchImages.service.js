@@ -12,7 +12,6 @@ module.exports = class fetchImagesService {
     async getImages(req, res) {
 
         const requiredKeys = ["deviceId", "fileLocation"];
-        console.log(req.body);
         if (!validateKey(requiredKeys, req.body)) {
             return res.status(400).json({ error: true, message: "Some required fields are missing" })
         }

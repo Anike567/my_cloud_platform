@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./../notificationService.json');
+const serviceAccount = require('./../../../aniket/secrets/cloud-connect-8f435-firebase-adminsdk-fbsvc-81c55744ac.json');
 
 let isInitialized = false;
 

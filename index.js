@@ -22,12 +22,6 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 
-app.get('/sync/hello', (req, res) => {
-    console.log("Received request at /sync/hello");
-    res.json({ message: 'Hello from sync endpoint!' });
-});
-
-
 app.use('/auth', authController);
 app.use('/upload', uploadController);
 app.use('/fetch', fetchImageController)
