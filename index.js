@@ -1,55 +1,58 @@
 const express = require('express');
+const helmet = require('helmet'); // Fixed spelling
 const { spawn } = require('child_process');
+const os = require('os');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+
+// Controllers & Configs
 const generateSymmetricKey = require('./scripts/generateKey');
-const { testConnection } = require('./config/db.cofig');
 const authController = require('./controller/authentication/signin.controller');
 const fetchImageController = require('./controller/fetch/fetchImages.controller');
 const uploadController = require('./controller/upload/upload.controller');
-const connectFirebase = require('./config/firebase.config');
 const deviceSyncRouter = require('./controller/sync/deviceSync.controller');
-const os = require('os');
-require('dotenv').config();
-
-
 
 const app = express();
-testConnection();
-connectFirebase();
-const router = express.Router();
-generateSymmetricKey();
 
-app.use(express.json({ limit: '50mb' }));
+// --- Middleware ---
+app.use(helmet()); 
+app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-
+// --- Routes ---
+app.get('/', (req, res) => res.status(200).json({ message: "Secure Server Active" }));
 app.use('/auth', authController);
 app.use('/upload', uploadController);
-app.use('/fetch', fetchImageController)
+app.use('/fetch', fetchImageController);
 app.use('/sync', deviceSyncRouter);
 
-app.listen(3000, '0.0.0.0', () => {
-    let command;
-    let args;
+// --- Server Setup ---
+const options = {
+    key: fs.readFileSync(path.join(__dirname, '../server.key')),
+    cert: fs.readFileSync(path.join(__dirname, '../server.cert'))
+};
 
-    if (os.platform() === 'darwin') {
-        command = 'ipconfig';
-        args = ['getifaddr', 'en0'];
-    } else {
-        // Linux/Ubuntu (common for development)
-        command = 'hostname';
-        // args = ['-I']; 
-    }
+const server = https.createServer(options, app);
+
+// Keep-Alive Configs
+server.maxRequestsPerSocket = 100;
+server.keepAliveTimeout = 10000;
+server.headersTimeout = 11000;
+
+// listen on 0.0.0.0 (all interfaces)
+server.listen(3000, '0.0.0.0', () => {
+    generateSymmetricKey();
+    console.log('Server bound to 0.0.0.0:3000');
+
+    // IP Detection Logic
+    let command = os.platform() === 'darwin' ? 'ipconfig' : 'hostname';
+    let args = os.platform() === 'darwin' ? ['getifaddr', 'en0'] : [];
 
     const output = spawn(command, args);
-
     output.stdout.on('data', (data) => {
-        // .split(' ')[0] handles cases where hostname -I returns multiple IPs
         const ip = data.toString().trim().split(' ')[1] || data.toString().trim().split(' ')[0];
-        console.log(`🚀 Server running at: http://${ip}:3000`);
-    });
-
-    output.stderr.on('data', (data) => {
-        console.error(`Error fetching IP: ${data}`);
+        console.log(`🚀 Access internally via: https://${ip}:3000/`);
     });
 });
-
