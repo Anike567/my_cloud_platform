@@ -42,7 +42,7 @@ server.keepAliveTimeout = 10000;
 server.headersTimeout = 11000;
 
 // listen on 0.0.0.0 (all interfaces)
-server.listen(3000, '0.0.0.0', () => {
+server.listen(4000, '0.0.0.0', () => {
     generateSymmetricKey();
     console.log('Server bound to 0.0.0.0:3000');
 
